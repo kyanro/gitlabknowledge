@@ -1,0 +1,245 @@
+VMwareにubuntu(12.04)を入れてgitlabを立てるまで。詰まりそうな部分をメモとして残す
+	ホスト：windows7 ゲスト:ubuntu
+	ubuntsOSのネットワーク設定はブリッジとして、他のPCからのアクセスも可能とする
+
+VMwareへのUbunuインストール（日本語版を使いたいため簡単インストールを使わない）
+	ubuntuの日本語版ISOをダウンロードしてくる
+	vmwareで新しい仮想マシンを作成する
+		あとでOSをインストールを選択
+		Linux>ubuntu　を選択
+		仮想ディスクを単一ファイルとして格納
+		ハードウェアをカスタマイズ
+			ネットワークアダプタ　をブリッジに。
+	インストール用のISOを設定してインストールを開始
+	
+	管理＞VMware toolsのインストールを選択（guest-host間のコピペとかできるようになる）
+		中身をhomeフォルダにコピー
+		展開先に移動後、
+		sudo ./vmware-install.pl
+		を実行。エンターを連打してよきに計らってもらう。
+	完了後に再起動する
+
+gitlabのインストール
+	https://github.com/gitlabhq/gitlabhq/blob/stable/doc/install/installation.md
+	を参考にひたすらコピペ。
+		gitlabのバージョンが上がってる！とか、rubyのバージョンが！とかは考えない。
+		そういうのは内容が分かるようになってからにする。
+		ただひたすらに書かれているママにコピペする簡単なお仕事。
+
+	システムを最新版に。sudoのインストール？
+		#apt-get update && apt-get upgrade && apt-get install sudo
+			rootになる方法がわからなかったので、
+				sudo apt-get update 
+				sudo apt-get upgrade 
+				sudo apt-get install sudo 
+			で実行した。最後いらないきもするけどとりあえず実行した。
+
+	エディタのインストール
+		sudo apt-get install -y vim
+	
+	必要なパッケージのインストール
+		sudo apt-get install -y build-essential zlib1g-dev libyaml-dev libssl-dev libgdbm-dev libreadline-dev libncurses5-dev libffi-dev curl git-core openssh-server redis-server postfix checkinstall libxml2-dev libxslt-dev libcurl4-openssl-dev libicu-dev
+			postfixの設定
+				設定なし
+	
+	pythonのインストールとバージョンの確認
+		sudo apt-get install python
+			入ってた。
+		python --version
+	
+	rubyのダウンロードとコンパイル
+		mkdir /tmp/ruby && cd /tmp/ruby
+		curl --progress http://ftp.ruby-lang.org/pub/ruby/1.9/ruby-1.9.3-p327.tar.gz | tar xz
+		cd ruby-1.9.3-p327
+		./configure
+		make
+		sudo make install
+		
+	bundler gem のインストール
+		sudo gem install bundler
+	
+	git ユーザーの追加。
+		sudo adduser \
+        --system \
+        --shell /bin/sh \
+        --gecos 'Git Version Control' \
+        --group \
+        --disabled-password \
+        --home /home/git \
+        git
+	
+	gitlab ユーザーの追加
+		sudo adduser --disabled-login --gecos 'GitLab' gitlab
+		sudo usermod -a -G git gitlab
+		sudo -u gitlab -H ssh-keygen -q -N '' -t rsa -f /home/gitlab/.ssh/id_rsa
+		
+	gitoliteのcloneと設定
+		cd /home/git
+		sudo -u git -H git clone -b gl-v320 https://github.com/gitlabhq/gitolite.git /home/git/gitolite
+
+		sudo -u git -H mkdir /home/git/bin
+		sudo -u git -H sh -c 'printf "%b\n%b\n" "PATH=\$PATH:/home/git/bin" "export PATH" >> /home/git/.profile'
+		sudo -u git -H sh -c 'gitolite/install -ln /home/git/bin'
+		
+		sudo cp /home/gitlab/.ssh/id_rsa.pub /home/git/gitlab.pub
+		sudo chmod 0444 /home/git/gitlab.pub
+		
+		sudo -u git -H sh -c "PATH=/home/git/bin:$PATH; gitolite setup -pk /home/git/gitlab.pub"
+		
+		sudo chmod 750 /home/git/.gitolite/
+		sudo chown -R git:git /home/git/.gitolite/
+		
+		sudo chmod -R ug+rwXs,o-rwx /home/git/repositories/
+		sudo chown -R git:git /home/git/repositories/
+		
+	domainをsshのリストに追加するために一度接続。確認はyes.
+		sudo -u gitlab -H ssh git@localhost
+		sudo -u gitlab -H ssh git@192.168.1.40
+			guestOSのIPを固定した後、接続しておいた。
+		#sudo -u gitlab -H ssh git@YOUR_GITOLITE_DOMAIN_NAME
+			gitolite domainが何を指定すればいいのかわからなかったのでとりあえず飛ばした
+		
+	gitoliteのclone test
+		sudo -u gitlab -H git clone git@localhost:gitolite-admin.git /tmp/gitolite-admin
+		sudo rm -rf /tmp/gitolite-admin
+		
+	database設定 MySQLで設定。
+		https://github.com/gitlabhq/gitlabhq/blob/stable/doc/install/databases.md　を確認しながら実行
+		
+		sudo apt-get install -y mysql-server mysql-client libmysqlclient-dev
+			インストール中に一応パスワードを聞かれるので設定しておく。
+		
+		mysql -u root -p
+			CREATE USER 'gitlab'@'localhost' IDENTIFIED BY '$password';
+			CREATE DATABASE IF NOT EXISTS `gitlabhq_production` DEFAULT CHARACTER SET `utf8` COLLATE `utf8_unicode_ci`;
+			GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON `gitlabhq_production`.* TO 'gitlab'@'localhost';
+		
+				ユーザの作成、DBの作成、権限の付与。パスワードは自分で設定しよう。間違って登録したら、
+					set password for gitlab@'localhost'=password('password');
+				で設定しなおしておく。
+	
+	gitlabのインストール
+		cd /home/gitlab
+		
+		クローン
+		sudo -u gitlab -H git clone https://github.com/gitlabhq/gitlabhq.git gitlab
+
+		cd /home/gitlab/gitlab
+		sudo -u gitlab -H git checkout 4-1-stable
+		
+		gitlabの設定ファイルコピー
+		sudo -u gitlab -H cp config/gitlab.yml.example config/gitlab.yml
+		sudo -u gitlab -H vim config/gitlab.yml
+
+			設定の編集
+				ローカルネットワークからIP指定でアクセスしたいので、
+				localhostをIPに変更していく。
+					gitlab settingsの
+						host: 192.168.1.40
+						port: 8080
+					## Gitolite settingsの
+						ssh_host: 192.168.1.40
+						#ssh_port: 22
+							ssh_portが変更されているならここもかえる
+
+		フォルダの権限設定
+		sudo chown -R gitlab log/
+		sudo chown -R gitlab tmp/
+		sudo chmod -R u+rwX  log/
+		sudo chmod -R u+rwX  tmp/
+		
+		unicornの設定ファイルをコピー
+		sudo -u gitlab -H cp config/unicorn.rb.example config/unicorn.rb
+		#sudo -u gitlab -H vim config/unicorn.rb
+			必要なら設定ファイルを編集する。
+			
+		DBの設定ファイルをコピー
+		sudo -u gitlab cp config/database.yml.mysql config/database.yml
+
+		DB設定の編集。MySQLのrootにパスワードを設定した場合、productionの項目にパスワードを書いておく。
+		sudo -u gitlab -H vim config/database.yml
+				
+		cd /home/gitlab/gitlab
+
+		gemのインストール
+		sudo gem install charlock_holmes --version '0.6.9'
+		sudo -u gitlab -H bundle install --deployment --without development test postgres
+		
+		gitの設定
+		sudo -u gitlab -H git config --global user.name "GitLab"
+		sudo -u gitlab -H git config --global user.email "gitlab@localhost"
+		
+		gitlab用hookの設定
+		sudo cp ./lib/hooks/post-receive /home/git/.gitolite/hooks/common/post-receive
+		sudo chown git:git /home/git/.gitolite/hooks/common/post-receive
+		
+		設定にしたがってgitlabの初期化　データベースをまっさらにしていいか聞かれるのでyes
+		sudo -u gitlab -H bundle exec rake gitlab:setup RAILS_ENV=production
+
+		gitlabを起動時にサービスとして立ち上げるための設定？
+		sudo curl --output /etc/init.d/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/4-1-stable/init.d/gitlab
+		sudo chmod +x /etc/init.d/gitlab
+
+		設定の確認
+		sudo -u gitlab -H bundle exec rake gitlab:env:info RAILS_ENV=production
+			CloneURL (http,ssh)等が設定通りか確認。
+		
+		gitlabサービスの開始
+		sudo service gitlab start
+			restart するときはrestart.
+
+nginxのインストール
+	sudo apt-get install nginx
+	
+	サイトの設定
+	sudo curl --output /etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/4-1-stable/nginx/gitlab
+	sudo ln -s /etc/nginx/sites-available/gitlab /etc/nginx/sites-enabled/gitlab
+	sudo vim /etc/nginx/sites-enabled/gitlab
+		server 
+			listen 192.168.1.40:8080;
+			#server_name YOUR_SERVER_FQDN;    #IPのみでアクセスするのでコメント化
+
+	nginxサービスの開始
+	sudo /etc/init.d/nginx restart
+	
+
+gitlabの初期設定
+	ログイン
+	admin@local.host
+	5iveL!fe
+
+	#パスワードを覚えやすい奴に変更
+
+	ユーザの追加
+	
+	追加したユーザでログイン
+	
+	テスト用プロジェクトの追加
+	
+	SSHキーの登録
+		sshのキーペアを作成
+		作成方法は下記を参考に。(github for windowsでgitをインストールした場合)
+			https://help.github.com/articles/generating-ssh-keys
+			※バックアップをとってから実行すること！
+			cd ~/.ssh
+			ssh-keygen -t rsa -C "gw.fnct+gitlab-pub@gmail.com"
+				エンター連打でよきにはからってもらう
+				id_rsaのファイル名の鍵がある場合は別名で鍵を作成する。上書きしないように注意。
+	
+		sshのconfigファイルに下記のように、ホストとそれに紐付く情報を内容を設定しておく。
+		設定しておかないとパスワードを毎回きかれる？
+		Hostの部分はドメイン名でのアクセスならドメイン名にする？環境を作ってないのでわかんない。
+
+			Host 192.168.1.40
+			  HostName 192.168.1.40
+			  IdentityFile ~/.ssh/gitlab2nd
+
+		公開鍵をgitlabに登録
+			作成した鍵の.pubをテキストエディタで開いてgitlabに登録。
+				MyProfile > SSH Keys > Add new
+				Titleには覚えやすいラベルを設定
+
+
+適当な環境からcloneを実行。
+	できた！　＞　おつかれさまでした！
+	できない！＞　ぐぐれks
