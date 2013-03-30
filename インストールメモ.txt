@@ -114,10 +114,13 @@ gitlabのインストール
 		git clone https://github.com/gitlabhq/gitlab-shell.git
 		
 		cd gitlab-shell
+		
+		git checkout v1.1.0
+		git checkout -b v1.1.0
 		cp config.yml.example config.yml
 		
 		# config.ymlを編集する。URLの設定とかそういうやつ。
-		# URLの部分をhttp://192.168.1.201/"に変更した
+		# URLの部分をhttp://192.168.1.201:10080/"に変更した
 		vim config.yml
 		
 		#インストール
