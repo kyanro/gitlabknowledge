@@ -199,7 +199,7 @@ gitlabのインストール
 		sudo -u git -H mkdir tmp/pids/
 		sudo chmod -R u+rwX  tmp/pids/
 	
-		# Unicorn configファイルのコピ
+		# Unicorn configファイルのコピー
 		sudo -u git -H cp config/unicorn.rb.example config/unicorn.rb
 
 	
