@@ -1,0 +1,19 @@
+upstream unicorn {
+         server unix:/tmp/unicorn.sock;
+}
+
+server {
+        listen  192.168.1.201:11080;    
+        #server_name     example.com;
+
+        root            /home/redmine/redmine/public;
+        error_log       /home/redmine/redmine/log/error.log;
+
+        location / {
+                if (-f $request_filename) { break; }
+                proxy_set_header X-Real-IP  $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header Host $http_host;
+                proxy_pass http://unicorn;
+        }
+}
