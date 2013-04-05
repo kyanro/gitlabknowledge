@@ -251,6 +251,8 @@ gitlabのインストール
 	
 		#サイト用の設定
 		#設定ファイルサンプルのダウンロード:
+		sudo curl --output /etc/nginx/sites-available/gitlab https://raw.github.com/gitlabhq/gitlab-recipes/master/nginx/gitlab
+		sudo ln -s /etc/nginx/sites-available/gitlab /etc/nginx/sites-enabled/gitlab
 
 		#  **YOUR_SERVER_IP** と **YOUR_SERVER_FQDN** をgitlab用に設定した適切なドメイン名、IPメールアドレスに変更する。
 		##このメモでは 192.168.1.201
