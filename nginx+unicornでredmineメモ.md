@@ -51,6 +51,9 @@
 	#実行権限の追加
 	sudo chmod +x /etc/init.d/unicorn_redmine
 
+	#unicorn_redmineの登録
+	sudo update-rc.d unicorn_redmine defaults
+
 	#unicornの再起動
 	sudo service unicorn_redmine stop
 	sudo service unicorn_redmine start
