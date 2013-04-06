@@ -1,0 +1,60 @@
+    #!/bin/bash
+    #
+    # unicorn_redmine Startup script for unicorn.
+    #
+    # chkconfig: - 85 15
+    # description: redmine on unicorn start/stop script.
+    #
+
+    set -u
+    set -e
+
+    APP_NAME=redmine
+    APP_ROOT="/home/redmine/$APP_NAME"
+    CNF="$APP_ROOT/config/unicorn.rb"
+    PID="$APP_ROOT/tmp/pids/unicorn.pid"
+    ENV=production
+    UNICORN_OPTS="-c $CNF -E $ENV -D"
+    old_pid="$PID.oldbin"
+
+    cd $APP_ROOT || exit 1
+
+    sig () {
+            test -s "$PID" && kill -$1 `cat $PID`
+    }
+    oldsig () {
+            test -s $old_pid && kill -$1 `cat $old_pid`
+    }
+
+    case ${1-help} in
+    start)
+            sig 0 && echo >&2 "Already running" && exit 0
+            cd $APP_ROOT ; unicorn_rails $UNICORN_OPTS
+            ;;
+    stop)
+            sig QUIT && exit 0
+            echo >&2 "Not running"
+            ;;
+    force-stop)
+            sig TERM && exit 0
+            echo >&2 "Not running"
+            ;;
+    restart|reload)
+            sig HUP && echo reloaded OK && exit 0
+            echo >&2 "Couldn't reload, starting instead"
+            unicorn_rails $UNICORN_OPTS
+            ;;
+    upgrade)
+            sig USR2 && exit 0
+            echo >&2 "Couldn't upgrade, starting instead"
+            unicorn_rails $UNICORN_OPTS
+            ;;
+    rotate)
+            sig USR1 && echo rotated logs OK && exit 0
+            echo >&2 "Couldn't rotate logs" && exit 1
+            ;;
+    *)
+            echo >&2 "Usage: $0 <start|stop|restart|upgrade|rotate|force-stop>"
+            exit 1
+            ;;
+    esac
