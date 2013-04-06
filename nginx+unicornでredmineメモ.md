@@ -4,7 +4,8 @@
 	http://n.blueblack.net/articles/2012-07-29_01_nginx_unicorn_redmine_02/
 	を参考にしました。
 
-	
+	192.168.1.201:11080 でredmineを運用すると仮定 
+
 
 
 ## 1:redmineユーザに切り替え後、redmineユーザのredmineのディレクトリに移動
@@ -20,15 +21,17 @@
 	vim config/unicorn.rb
 
 	#unicorn.rbを下記のファイルと同じように設定する
-[unicorn.rb](https://github.com/kyanro/gitlabknowledge/blob/5.x/nginx/redmine)
+[unicorn.rb](https://github.com/kyanro/gitlabknowledge/blob/5.x/redmine/unicorn.rb)
 
 
 ## 4:unicornの起動
-	unicorn_rails -c config/unicorn.rb -E production -D
+	#自動起動に登録するようにしたのでここはとばすようにした。
+	#unicorn_rails -c config/unicorn.rb -E production -D
 
 
 ## 5:nginxの設定
 	#/etc/nginx/sites-available/redmine を下記のファイルと同じように設定する
+	#listen  192.168.1.201:11080; の部分は自分の環境に合わせる
 	sudo vim /etc/nginx/sites-available/redmine
 	sudo ln -s /etc/nginx/sites-available/redmine /etc/nginx/sites-enabled/redmine
 [/etc/nginx/sites-available/redmine](https://github.com/kyanro/gitlabknowledge/blob/5.x/nginx/redmine)
@@ -51,4 +54,3 @@
 	#unicornの再起動
 	sudo service unicorn_redmine stop
 	sudo service unicorn_redmine start
-	ps auxf

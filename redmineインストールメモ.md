@@ -28,7 +28,9 @@
 	sudo su redmine
 	cd /home/redmine
 	git clone git://github.com/redmine/redmine.git
+
 	#チェックアウト
+	cd /home/redmine/redmine/
 	git checkout 2.3.0
 
 
@@ -51,6 +53,7 @@
 	quit
 	
 	#データベースの設定。productionのユーザ名、パスワードをmysqlで設定したものに編集
+	#例) username: redmine   password: "sa1234"
 	vim config/database.yml
 
 
