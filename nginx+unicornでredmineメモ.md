@@ -43,7 +43,7 @@
 	#起動スクリプトの作成
 	#下記のファイルのように設定
 	sudo vim /etc/init.d/unicorn_redmine
-	[/etc/init.d/unicorn_redmine](htt://github.com/sample)
+[/etc/init.d/unicorn_redmine](https://github.com/kyanro/gitlabknowledge/blob/5.x/unicorn/unicorn_redmine)
 
 	#実行権限の追加
 	sudo chmod +x /etc/init.d/unicorn_redmine
