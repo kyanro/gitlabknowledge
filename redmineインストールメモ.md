@@ -83,17 +83,24 @@
 
 
 ## 13:redmine上からgitlabのリポジトリを見れるようにする
+
+	#2013/04/07追記
+	#gitグループに他のユーザを所属させるとなぜか公開鍵を利用したpushやpullができなくなった
+	#gitlab-shell 1.1の問題？よくわからない。
+	#/home/git/repositories/ にredmineから読み取り権限をつければいいかとも思ったけどうまくいかなかった
+	#redmineユーザを作らずに、既存のgitユーザでredmineをインストールする方向に方針転換決定
+
 	#gitlabをgitグループに追加
-	sudo gpasswd -a redmine git
+	#sudo gpasswd -a redmine git
 	
 	#グループが反映されているか確認
-	sudo -u redmine -H id
+	#sudo -u redmine -H id
 
 	#大体こんなかんじになってるはず。1001(git)があればOK
 	#id=1002(redmine) gid=1002(redmine) groups=1002(redmine),1001(git)
 
 	#WEBrickを立ち上げる
-	sudo -u redmine -H ruby script/rails server webrick -e production
+	#sudo -u redmine -H ruby script/rails server webrick -e production
 
 
 # 14:ここからブラウザでの操作
