@@ -1,48 +1,28 @@
 ## redmineユーザを作って/home/redmine にインストールしてみた
-	linux系OSにアプリをインストールするときのお作法がよくわかってないのでとりあえず動くレベルです。
+	linux系OSにアプリをインストールするときのお作法はなんとなくわかってきた。
+	が、とりあえず動くレベルです。
 	gitlabの流れを真似しながらいれてみたつもり。
 
 	残作業
 		メールサーバの設定
 
-	#とりあえず動いたレベルだよ!!!
-
-
 ## 1:System Users
 	#redmineのために redmine ユーザを追加
 	sudo adduser --disabled-login --gecos 'redmine' redmine
-	#redmineユーザにパスワードを設定
-	sudo passwd redmine
-
-	#sudoをredmineユーザが実行できるようにしておく。
-	#エラーが出たからいわれるままに追記。
-	#エディタで、下記のようにrootの下の行にredmineを追加
-	sudo vim /etc/sudoers
-		
-		# User privilege specification
-		root    ALL=(ALL:ALL) ALL
-		redmine ALL=(ALL:ALL) ALL
 
 
 ## 2:redmineのくろーん
-	sudo su redmine
 	cd /home/redmine
-	git clone git://github.com/redmine/redmine.git
+	sudo -u redmine -H git clone git://github.com/redmine/redmine.git
 
 	#チェックアウト
 	cd /home/redmine/redmine/
-	git checkout 2.3.0
+	sudo -u redmine -H git checkout -b 2.3.0
 
 
-## 3:データベースとメールサーバの設定
-	#configファイルのコピー
-	cp config/database.yml.example config/database.yml
-	#メールサーバの設定は今は飛ばした
-
-
-## 4:データベースの作成
+## 3:データベースの作成
 	#mysqlにrootでログイン
-
+	mysql -u root -p
 
 	#データベースの作成、ユーザの作成、権限の付与
 	create database redmine character set utf8;
@@ -51,37 +31,44 @@
 
 	#mysqlから抜ける
 	quit
-	
-	#データベースの設定。productionのユーザ名、パスワードをmysqlで設定したものに編集
-	#例) username: redmine   password: "sa1234"
-	vim config/database.yml
+
+
+## 4:データベースとメールサーバの設定
+	#configファイルのコピーと編集
+	#production の username:redmine password:"sa1234" と仮定
+	sudo -u redmine -H cp config/database.yml.example config/database.yml
+	sudo -u redmine -H vim config/database.yml
+
+	#メールサーバの設定は今は飛ばした
 
 
 ## 5:bundlerを利用してインストール
-	bundle install --without development test postgresql sqlite rmagick
+	sudo -u redmine -H bundle exec install --path vendor/bundle --without development test postgresql sqlite rmagick
 
 
 ## 6:セッションストア秘密鍵を生成
-	rake generate_secret_token
+	sudo -u redmine -H bundle exec rake generate_secret_token
 
 
 ## 7:データベース上にテーブルを作成
-	RAILS_ENV=production rake db:migrate
+	sudo -u redmine -H bundle exec rake db:migrate RAILS_ENV=production
 
 
 ## 8:下記コマンドを実行し、デフォルトデータをデータベースに登録
-	RAILS_ENV=production rake redmine:load_default_data
+	#言語を聞かれるので ja を入力
+	sudo -u redmine -H bundle exec rake redmine:load_default_data RAILS_ENV=production
 
 
 ## 9:書き込み権限が必要なディレクトリの作成と設定
-	mkdir tmp public/plugin_assets 
+	#すでにディレクトリがあったら mkdir は飛ばしてok
+	sudo -u redmine -H mkdir tmp public/plugin_assets
+
 	sudo chown -R redmine:redmine files log tmp public/plugin_assets
 	sudo chmod -R 755 files log tmp public/plugin_assets
 	
 	
 ## 10:WEBrickによるwebサーバを起動して、インストールができたかテスト
-	ruby script/rails server webrick -e production
-
+	sudo -u redmine -H ruby script/rails server webrick -e production
 
 ## 11:WEBrickが起動したら、ブラウザで http://localhost:3000/ を開く。Redmineのwelcomeページが表示されるはず。
 	#注意書きが下記のようにあったので、gitlabで利用しているnginx上での動作に変更するために今度がんばる
@@ -99,15 +86,14 @@
 	#gitlabをgitグループに追加
 	sudo gpasswd -a redmine git
 	
-	#redmineユーザでログインし直して、グループが反映されているか確認。されてなかったらターミナルを閉じて開き直せばいい？
-	exit
-	sudo su redmine
-	id
+	#グループが反映されているか確認
+	sudo -u redmine -H id
+
 	#大体こんなかんじになってるはず。1001(git)があればOK
 	#id=1002(redmine) gid=1002(redmine) groups=1002(redmine),1001(git)
 
 	#WEBrickを立ち上げる
-	ruby script/rails server webrick -e production
+	sudo -u redmine -H ruby script/rails server webrick -e production
 
 
 # 14:ここからブラウザでの操作
@@ -130,3 +116,6 @@
 	のようにカンマ区切りでエンコードを指定してやる。
 	左側から順番にエンコーディングをためして、最初にエラーが発生せずに変換できた結果が採用される。
 
+
+## 2回目入れてみての感想
+ローカルならwebrickでの運用でよくね(´・ω・｀)？
