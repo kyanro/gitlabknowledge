@@ -12,7 +12,7 @@
 	cd /home/git/redmine/
 
 	# pidsディレクトリを作成し、 gitユーザが書き込みできるようにする
-	#全開までの手順でできているはずだが念のため
+	#前回までの手順でできているはずだが念のため
 	sudo -u git -H mkdir tmp/pids/
 	sudo chmod -R u+rwX  tmp/pids/
 
@@ -33,7 +33,7 @@
 
 
 ## 4:unicornの起動確認
-	#エラーが発生ないことを確認
+	#エラーが発生しないことを確認
 	sudo -u git -H bundle exec unicorn_rails -c config/unicorn.rb -E production -D
 
 	# プロセスを殺しておきたければ下記を実行しておく
