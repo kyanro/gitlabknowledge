@@ -8,26 +8,36 @@
 
 
 
-## 1:redmineユーザに切り替え後、redmineユーザのredmineのディレクトリに移動
-	su redmine
-	cd /home/redmine/redmine/
+## 1:gitユーザのredmineのディレクトリに移動
+	cd /home/git/redmine/
+
+	# pidsディレクトリを作成し、 gitユーザが書き込みできるようにする
+	#全開までの手順でできているはずだが念のため
+	sudo -u git -H mkdir tmp/pids/
+	sudo chmod -R u+rwX  tmp/pids/
 
 
-## 2:unicornのインストール
-	sudo gem install unicorn
+## 2:unicornをgemファイルに追加してインストール
+	#gemをしている箇所に `gem 'unicorn'` を追加。
+	sudo -u git vim Gemfile
+
+	#インストール
+	sudo -u git -H bundle install --path vendor/bundle --without development test postgresql sqlite rmagick
 
 
 ## 3:unicorn.rbの作成
-	vim config/unicorn.rb
-
 	#unicorn.rbを下記のファイルと同じように設定する
+	sudo -u git vim config/unicorn.rb
+
 [unicorn.rb](https://github.com/kyanro/gitlabknowledge/blob/5.x/redmine/unicorn.rb)
 
 
-## 4:unicornの起動
-	#自動起動に登録するようにしたのでここはとばすようにした。
-	#unicorn_rails -c config/unicorn.rb -E production -D
+## 4:unicornの起動確認
+	#エラーが発生ないことを確認
+	sudo -u git -H bundle exec unicorn_rails -c config/unicorn.rb -E production -D
 
+	# プロセスを殺しておきたければ下記を実行しておく
+	# sudo -u git kill -QUIT $(cat tmp/pids/unicorn.pid)
 
 ## 5:nginxの設定
 	#/etc/nginx/sites-available/redmine を下記のファイルと同じように設定する
@@ -41,6 +51,10 @@
 	sudo /etc/init.d/nginx stop
 	sudo /etc/init.d/nginx start
 
+	# unicornのプロセスを殺してなければここでいったんredmineがブラウザから表示できるか確認しておく
+	# http://192.168.1.201:11080
+	# 確認できたらプロセスを殺しておく
+	# sudo -u git kill -QUIT $(cat tmp/pids/unicorn.pid)
 
 ## 7:redmineで利用するunicorn を自動起動に登録
 	#起動スクリプトの作成
@@ -54,6 +68,10 @@
 	#unicorn_redmineの登録
 	sudo update-rc.d unicorn_redmine defaults
 
-	#unicornの再起動
-	sudo service unicorn_redmine stop
+	#unicornがサービス化されているかテスト
 	sudo service unicorn_redmine start
+	
+	# http://192.168.1.201:11080 でアクセスできるか確認
+
+	# 停止の確認
+	sudo service unicorn_redmine stop

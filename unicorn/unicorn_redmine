@@ -10,13 +10,13 @@
 # Description:       redmine
 ### END INIT INFO
 
-export PATH=$PATH:/usr/local/bin
+#export PATH=$PATH:/usr/local/bin
 
 set -u
 set -e
 
 APP_NAME=redmine
-APP_ROOT="/home/redmine/$APP_NAME"
+APP_ROOT="/home/git/$APP_NAME"
 CNF="$APP_ROOT/config/unicorn.rb"
 PID="$APP_ROOT/tmp/pids/unicorn.pid"
 ENV=production
@@ -35,7 +35,7 @@ oldsig () {
 case ${1-help} in
 start)
         sig 0 && echo >&2 "Already running" && exit 0
-        cd $APP_ROOT ; unicorn_rails $UNICORN_OPTS
+        cd $APP_ROOT ; sudo -u git -H bundle exec unicorn_rails $UNICORN_OPTS
         ;;
 stop)
         sig QUIT && exit 0

@@ -1,13 +1,13 @@
 upstream unicorn {
-         server unix:/tmp/unicorn.sock;
+         server unix:/home/git/redmine/tmp/sockets/unicorn.socket;
 }
 
 server {
         listen  192.168.1.201:11080;    
         #server_name     example.com;
 
-        root            /home/redmine/redmine/public;
-        error_log       /home/redmine/redmine/log/error.log;
+        root            /home/git/redmine/public;
+        error_log       /home/git/redmine/log/error.log;
 
         location / {
                 if (-f $request_filename) { break; }
