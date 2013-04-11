@@ -109,3 +109,10 @@
 
 ## 3回目入れてみての感想
 ローカルならまぁ同じユーザで動いててもいいよね(´・ω・｀)？
+
+おまけ2
+	#プラグインのインストール(redmine_git_branch_hook
+	sudo -u git -H git clone git://github.com/mikoto20000/redmine_git_branch_hook.git
+	cd /home/git/redmine
+	sudo -u git -H bundle exec rake db:migrate_plugins RAILS_ENV=production
+	sudo service nginx restart 
