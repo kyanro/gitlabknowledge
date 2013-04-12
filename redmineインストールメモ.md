@@ -112,10 +112,14 @@
 
 おまけ2
 	#プラグインのインストール(redmine_git_branch_hook
-	sudo -u git -H git clone git://github.com/mikoto20000/redmine_git_branch_hook.git
 	cd /home/git/redmine
+	sudo -u git -H git clone git://github.com/mikoto20000/redmine_git_branch_hook.git
+	cd /home/git/redmine/plubins
 	sudo -u git -H bundle exec rake redmine:plugins:migrate RAILS_ENV=production
 	sudo service nginx restart
 	sudo service unicorn_redmine stop
 	sudo service unicorn_redmine start
 
+おまけ3
+	#mime type の設定　下記のファイルに設定を追加
+	sudo -u git -H vim /home/git/redmine/lib/redmine/mime_type.rb 
