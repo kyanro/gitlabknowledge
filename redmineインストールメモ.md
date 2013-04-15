@@ -106,11 +106,7 @@
 	のようにカンマ区切りでエンコードを指定してやる。
 	左側から順番にエンコーディングをためして、最初にエラーが発生せずに変換できた結果が採用される。
 
-
-## 3回目入れてみての感想
-ローカルならまぁ同じユーザで動いててもいいよね(´・ω・｀)？
-
-おまけ2
+## おまけ2
 	#プラグインのインストール(redmine_git_branch_hook
 	cd /home/git/redmine
 	sudo -u git -H git clone git://github.com/mikoto20000/redmine_git_branch_hook.git
@@ -120,6 +116,10 @@
 	sudo service unicorn_redmine stop
 	sudo service unicorn_redmine start
 
-おまけ3
+## おまけ3
 	#mime type の設定　下記のファイルに設定を追加
 	sudo -u git -H vim /home/git/redmine/lib/redmine/mime_type.rb 
+
+
+## 3回目入れてみての感想
+ローカルならまぁ同じユーザで動いててもいいよね(´・ω・｀)？
